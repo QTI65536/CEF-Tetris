@@ -552,6 +552,10 @@ function togglePause(){
   }
 }
 document.addEventListener('keydown',e=>{
+  // Always block scroll keys when game is active
+  const gameKeys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'];
+  if(gameKeys.includes(e.code)) e.preventDefault();
+
   if(gameState==='gameover')return;
   if(e.code==='KeyP'){togglePause();return;}
   if(e.code==='KeyM'){toggleSound();return;}
@@ -560,7 +564,7 @@ document.addEventListener('keydown',e=>{
   else if(e.code==='ArrowRight'){if(valid(current.cells,current.row,current.col+1)){current.col++;sfxMove();}}
   else if(e.code==='ArrowDown'){drop();acc=0;}
   else if(e.code==='ArrowUp'){const rot=rotateCells(current.cells);if(valid(rot,current.row,current.col)){current.cells=rot;sfxRotate();}else if(valid(rot,current.row,current.col+1)){current.cells=rot;current.col++;sfxRotate();}else if(valid(rot,current.row,current.col-1)){current.cells=rot;current.col--;sfxRotate();}}
-  else if(e.code==='Space'){e.preventDefault();hardDrop();}
+  else if(e.code==='Space'){hardDrop();}
   render();updateUI();
 });
 document.getElementById('startBtn').addEventListener('click',()=>{if(gameState==='paused')togglePause();else startGame();});
