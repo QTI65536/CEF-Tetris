@@ -14,9 +14,13 @@ body{
   background-size:128px 48px;
   color:#d8d5ce;
   font-family:'Share Tech Mono','Courier New',monospace;
-  display:flex;flex-direction:column;align-items:center;
-  min-height:100vh;padding:18px 12px 14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100vh;overflow:hidden;padding:0;
   user-select:none;position:relative;
+}
+#scaleWrap{
+  display:flex;flex-direction:column;align-items:center;
+  transform-origin:top center;
 }
 body::before{
   content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -26,9 +30,9 @@ body::before{
 body::after{content:none;}
 body>*{position:relative;z-index:1;}
 
-h1{font-size:24px;letter-spacing:6px;color:#F8EFC0;text-transform:uppercase;margin-bottom:3px;font-weight:400;text-shadow:0 2px 10px rgba(0,0,0,0.95);}
-.subtitle{font-size:11px;color:#D4B080;letter-spacing:3px;margin-bottom:14px;text-shadow:0 1px 6px rgba(0,0,0,0.95);}
-.disclaimer{font-size:13px;color:#F0D090;text-align:center;margin-top:14px;max-width:660px;line-height:1.8;text-shadow:0 2px 8px rgba(0,0,0,0.99),0 0 20px rgba(0,0,0,0.9);font-weight:400;letter-spacing:0.5px;border-top:1px solid rgba(180,120,60,0.3);padding-top:12px;}
+h1{font-size:21px;letter-spacing:5px;color:#F8EFC0;text-transform:uppercase;margin-bottom:2px;font-weight:400;text-shadow:0 2px 10px rgba(0,0,0,0.95);}
+.subtitle{font-size:10px;color:#D4B080;letter-spacing:3px;margin-bottom:8px;text-shadow:0 1px 6px rgba(0,0,0,0.95);}
+.disclaimer{font-size:12px;color:#F0D090;text-align:center;margin-top:8px;max-width:760px;line-height:1.6;text-shadow:0 2px 8px rgba(0,0,0,0.99);font-weight:400;letter-spacing:0.5px;border-top:1px solid rgba(180,120,60,0.35);padding-top:8px;}
 
 .game-wrap{display:flex;gap:16px;align-items:flex-start;}
 .panel-left{width:186px;display:flex;flex-direction:column;gap:9px;}
@@ -94,6 +98,7 @@ canvas#board{display:block;position:relative;z-index:1;image-rendering:pixelated
 </style>
 </head>
 <body>
+<div id="scaleWrap">
 <h1>CEF TETRIS</h1>
 <div class="subtitle">QTI Capital · DSM Framework · Discount Hunting</div>
 
@@ -569,6 +574,21 @@ document.addEventListener('keydown',e=>{
 });
 document.getElementById('startBtn').addEventListener('click',()=>{if(gameState==='paused')togglePause();else startGame();});
 initBoard();render();
+
+// ── Viewport fit: scale entire layout to fit 100vh ──
+function fitToViewport(){
+  const wrap = document.getElementById('scaleWrap');
+  if(!wrap) return;
+  const naturalH = wrap.scrollHeight;
+  const viewH    = window.innerHeight;
+  const scale    = Math.min(1, viewH / naturalH);
+  wrap.style.transform = scale < 1 ? `scale(${scale.toFixed(4)})` : '';
+  // Centering: when scaled down, shrink the effective height so body stays centered
+  wrap.style.marginTop = scale < 1 ? `${(viewH - naturalH * scale) / 2}px` : '0';
+}
+fitToViewport();
+window.addEventListener('resize', fitToViewport);
 </script>
+</div><!-- /scaleWrap -->
 </body>
 </html>
