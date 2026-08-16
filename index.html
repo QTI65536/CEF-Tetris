@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CEF TETRIS — QTI Capital DSM Framework</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  background-color:#5C3020;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='48'%3E%3Crect x='1' y='1' width='62' height='20' rx='1' fill='%23703828' /%3E%3Crect x='65' y='1' width='62' height='20' rx='1' fill='%236A3424' /%3E%3Crect x='1' y='25' width='30' height='20' rx='1' fill='%23683222' /%3E%3Crect x='33' y='25' width='62' height='20' rx='1' fill='%23723A2A' /%3E%3Crect x='97' y='25' width='30' height='20' rx='1' fill='%23683222' /%3E%3C/svg%3E");
+  background-size:128px 48px;
+  color:#d8d5ce;
+  font-family:'Share Tech Mono','Courier New',monospace;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;padding:18px 12px 14px;
+  user-select:none;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='48'%3E%3Crect x='1' y='1' width='62' height='6' rx='1' fill='rgba(255,255,255,0.07)' /%3E%3Crect x='65' y='1' width='62' height='6' rx='1' fill='rgba(255,255,255,0.04)' /%3E%3Crect x='1' y='15' width='62' height='6' rx='1' fill='rgba(0,0,0,0.12)' /%3E%3Crect x='65' y='15' width='62' height='6' rx='1' fill='rgba(0,0,0,0.10)' /%3E%3Crect x='1' y='25' width='30' height='6' rx='1' fill='rgba(255,255,255,0.05)' /%3E%3Crect x='33' y='25' width='62' height='6' rx='1' fill='rgba(255,255,255,0.08)' /%3E%3Crect x='97' y='25' width='30' height='6' rx='1' fill='rgba(255,255,255,0.04)' /%3E%3Crect x='1' y='39' width='30' height='6' rx='1' fill='rgba(0,0,0,0.10)' /%3E%3Crect x='33' y='39' width='62' height='6' rx='1' fill='rgba(0,0,0,0.13)' /%3E%3Crect x='97' y='39' width='30' height='6' rx='1' fill='rgba(0,0,0,0.09)' /%3E%3C/svg%3E");
+  background-size:128px 48px;
+}
+body::after{content:none;}
+body>*{position:relative;z-index:1;}
+
+h1{font-size:24px;letter-spacing:6px;color:#F8EFC0;text-transform:uppercase;margin-bottom:3px;font-weight:400;text-shadow:0 2px 10px rgba(0,0,0,0.95);}
+.subtitle{font-size:11px;color:#D4B080;letter-spacing:3px;margin-bottom:14px;text-shadow:0 1px 6px rgba(0,0,0,0.95);}
+.disclaimer{font-size:10px;color:#B09070;text-align:center;margin-top:12px;max-width:600px;line-height:1.6;text-shadow:0 1px 4px rgba(0,0,0,0.9);}
+
+.game-wrap{display:flex;gap:16px;align-items:flex-start;}
+.panel-left{width:186px;display:flex;flex-direction:column;gap:9px;}
+.panel-right{width:162px;display:flex;flex-direction:column;gap:9px;}
+
+.card{border:1px solid #2a1a10;padding:12px 14px;background:rgba(14,12,10,0.92);border-radius:6px;backdrop-filter:blur(2px);}
+.stat-label{font-size:11px;color:#A09080;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.stat-val{font-size:22px;color:#F0DFA0;font-weight:400;}
+.stat-sub{font-size:10px;color:#706050;margin-top:3px;}
+
+.piece-ticker{font-size:22px;font-weight:400;margin-bottom:4px;color:#F0EAD8;}
+.piece-detail{font-size:11px;color:#A09888;line-height:1.85;}
+
+.q-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px;color:#B0A898;letter-spacing:1px;}
+.q-dot{width:11px;height:11px;border-radius:2px;flex-shrink:0;}
+
+.sound-box{border:1px solid #2a1a10;padding:10px 14px;background:rgba(14,12,10,0.92);border-radius:6px;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:space-between;}
+.sound-label{font-size:11px;color:#A09080;letter-spacing:2px;text-transform:uppercase;}
+.sound-btn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;background:#0e0d0c;border:1px solid #3a2820;color:#807868;padding:5px 12px;cursor:pointer;border-radius:4px;text-transform:uppercase;transition:all 0.15s;}
+.sound-btn.on{border-color:#1D9E75;color:#5DCAA5;}
+
+/* power-up bar */
+.powerbar-wrap{border:1px solid #2a1a10;padding:11px 14px;background:rgba(14,12,10,0.92);border-radius:6px;}
+.powerbar-label{font-size:10px;color:#A09080;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.powerbar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:10px;}
+.powerbar-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.powerbar-name{color:#B0A090;flex:1;}
+.powerbar-val{color:#F0DFA0;min-width:28px;text-align:right;}
+
+/* speed indicator */
+.speed-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+.speed-pip{width:8px;height:8px;border-radius:2px;background:#2a2018;}
+.speed-pip.lit{background:#D85A30;}
+
+/* controls */
+.controls-box{border:1px solid #2a1a10;padding:12px 14px;background:rgba(14,12,10,0.88);border-radius:6px;font-size:11px;color:#706050;line-height:2.2;letter-spacing:1px;}
+.controls-box span{color:#C0B0A0;}
+
+/* board */
+.board-wrap{position:relative;border:2px solid #2a1208;border-radius:4px;overflow:hidden;background:#0d0c0b;box-shadow:inset 0 0 0 1px #1a0a04,0 0 14px rgba(0,0,0,0.9);}
+.shiba-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;}
+canvas#board{display:block;position:relative;z-index:1;image-rendering:pixelated;background:transparent;}
+
+/* overlay */
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(13,12,11,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;border-radius:4px;}
+.overlay h2{font-size:20px;color:#F8EFC0;letter-spacing:4px;text-transform:uppercase;font-weight:400;}
+.overlay p{font-size:10px;color:#8a7860;letter-spacing:1px;text-align:center;line-height:2;}
+.overlay .income{font-size:30px;color:#5DCAA5;letter-spacing:2px;}
+.btn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;background:#1a1814;border:1px solid #F8EFC0;color:#F8EFC0;padding:10px 26px;cursor:pointer;border-radius:5px;}
+.btn:hover{background:#252210;}
+
+/* combo / power-up popups */
+.combo-popup{position:absolute;left:0;right:0;font-family:'Share Tech Mono',monospace;font-size:14px;color:#F8EFC0;text-align:center;letter-spacing:2px;pointer-events:none;animation:fadeUp 1.1s ease forwards;z-index:12;}
+.powerup-popup{position:absolute;left:0;right:0;font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;letter-spacing:2px;pointer-events:none;animation:fadeUp 1.4s ease forwards;z-index:13;}
+@keyframes fadeUp{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-48px);}}
+
+/* ROC warning flash */
+.roc-flash{position:absolute;top:0;left:0;right:0;padding:5px 0;background:rgba(220,100,20,0.92);font-family:'Share Tech Mono',monospace;font-size:11px;color:#fff;text-align:center;letter-spacing:2px;z-index:14;animation:flashBanner 2.2s ease forwards;}
+@keyframes flashBanner{0%{opacity:0;}10%{opacity:1;}80%{opacity:1;}100%{opacity:0;}}
+
+/* slow-time tint */
+.slowtime-tint{position:absolute;inset:0;background:rgba(29,158,117,0.07);pointer-events:none;z-index:2;display:none;}
+</style>
+</head>
+<body>
+<h1>CEF TETRIS</h1>
+<div class="subtitle">QTI Capital · DSM Framework · Discount Hunting</div>
+
+<div class="game-wrap">
+  <!-- Left panel -->
+  <div class="panel-left">
+    <div class="card">
+      <div class="stat-label">Portfolio Income</div>
+      <div class="stat-val" id="score">$0.00</div>
+      <div class="stat-sub">accumulates on line clears</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Lines Cleared</div>
+      <div class="stat-val" id="lines">0</div>
+      <div class="stat-sub" id="combo-label">—</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Current Piece</div>
+      <div class="piece-ticker" id="cur-ticker">—</div>
+      <div class="piece-detail" id="cur-detail">—</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">DSM Quadrant</div>
+      <div class="q-item"><div class="q-dot" style="background:#1D9E75"></div>Thesis Working</div>
+      <div class="q-item"><div class="q-dot" style="background:#378ADD"></div>Premium Territory</div>
+      <div class="q-item"><div class="q-dot" style="background:#D85A30"></div>Buy Zone</div>
+      <div class="q-item"><div class="q-dot" style="background:#888780"></div>Worst Setup</div>
+    </div>
+    <div class="sound-box">
+      <div class="sound-label">Sound</div>
+      <button class="sound-btn on" id="soundBtn" onclick="toggleSound()">ON</button>
+    </div>
+  </div>
+
+  <!-- Board -->
+  <div class="board-wrap" id="boardWrap">
+    <div class="shiba-bg">
+      <svg viewBox="0 0 280 345" width="300" height="360" xmlns="http://www.w3.org/2000/svg" opacity="0.28">
+        <ellipse cx="140" cy="232" rx="72" ry="80" fill="#D4903E"/>
+        <ellipse cx="140" cy="258" rx="40" ry="52" fill="#EEC882"/>
+        <ellipse cx="94" cy="307" rx="22" ry="28" fill="#D4903E"/>
+        <ellipse cx="186" cy="307" rx="22" ry="28" fill="#D4903E"/>
+        <ellipse cx="94" cy="330" rx="18" ry="10" fill="#EEC882"/>
+        <ellipse cx="186" cy="330" rx="18" ry="10" fill="#EEC882"/>
+        <rect x="106" y="282" width="22" height="50" rx="11" fill="#D4903E"/>
+        <rect x="152" y="282" width="22" height="50" rx="11" fill="#D4903E"/>
+        <ellipse cx="117" cy="332" rx="14" ry="9" fill="#EEC882"/>
+        <ellipse cx="163" cy="332" rx="14" ry="9" fill="#EEC882"/>
+        <path d="M208 202 Q265 148 250 96 Q238 72 218 96 Q208 136 210 192Z" fill="#D4903E"/>
+        <ellipse cx="238" cy="100" rx="14" ry="18" fill="#EEC882" transform="rotate(-20 238 100)"/>
+        <ellipse cx="140" cy="130" rx="68" ry="65" fill="#D4903E"/>
+        <ellipse cx="140" cy="106" rx="38" ry="30" fill="#EEC882"/>
+        <ellipse cx="96" cy="150" rx="22" ry="15" fill="#C05830" opacity="0.45"/>
+        <ellipse cx="184" cy="150" rx="22" ry="15" fill="#C05830" opacity="0.45"/>
+        <ellipse cx="140" cy="160" rx="33" ry="23" fill="#EEC882"/>
+        <ellipse cx="140" cy="151" rx="11" ry="8" fill="#2a1408"/>
+        <ellipse cx="136" cy="152" rx="3.5" ry="2.5" fill="#4a2818"/>
+        <ellipse cx="144" cy="152" rx="3.5" ry="2.5" fill="#4a2818"/>
+        <path d="M127 166 Q140 178 153 166" fill="none" stroke="#2a1408" stroke-width="2.8" stroke-linecap="round"/>
+        <ellipse cx="110" cy="126" rx="13" ry="10" fill="#f8f0e0"/>
+        <ellipse cx="110" cy="127" rx="8" ry="7" fill="#2a1408"/>
+        <ellipse cx="112" cy="125" rx="2.8" ry="2.8" fill="#f8f0e0"/>
+        <ellipse cx="170" cy="126" rx="13" ry="10" fill="#f8f0e0"/>
+        <ellipse cx="170" cy="127" rx="8" ry="7" fill="#2a1408"/>
+        <ellipse cx="172" cy="125" rx="2.8" ry="2.8" fill="#f8f0e0"/>
+        <path d="M98 113 Q110 107 123 113" fill="none" stroke="#2a1408" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M157 113 Q170 107 182 113" fill="none" stroke="#2a1408" stroke-width="3.2" stroke-linecap="round"/>
+        <polygon points="80,88 56,26 112,72" fill="#D4903E"/>
+        <polygon points="86,86 68,38 110,76" fill="#B06828"/>
+        <polygon points="200,88 224,26 168,72" fill="#D4903E"/>
+        <polygon points="194,86 212,38 170,76" fill="#B06828"/>
+        <text x="140" y="18" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="13" fill="#c8a060" letter-spacing="2" opacity="0.9">such yield</text>
+        <text x="140" y="36" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="11" fill="#8a6840" letter-spacing="2" opacity="0.8">very CEF · wow</text>
+      </svg>
+    </div>
+    <div class="slowtime-tint" id="slowTint"></div>
+    <canvas id="board" width="360" height="720"></canvas>
+    <div class="overlay" id="overlay">
+      <h2 id="overlay-title">CEF Tetris</h2>
+      <p id="overlay-sub">Stack funds · clear lines · pocket income<br>Green blocks slow fall · Gray/Orange fall fast<br>Power-ups fire on full-quadrant clears</p>
+      <div class="income" id="overlay-income" style="display:none"></div>
+      <button class="btn" id="startBtn">Start Game</button>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="panel-right">
+    <div class="card">
+      <div class="stat-label">Next Piece</div>
+      <canvas id="next" width="136" height="96"></canvas>
+      <div class="piece-ticker" id="next-ticker" style="font-size:14px;margin-top:6px;text-align:center;color:#F0EAD8;">—</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Level</div>
+      <div class="stat-val" id="level">1</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">High Score</div>
+      <div class="stat-val" id="hiscore" style="font-size:14px;">$0.00</div>
+    </div>
+    <div class="powerbar-wrap">
+      <div class="powerbar-label">Power-Ups</div>
+      <div class="powerbar-row"><div class="powerbar-dot" style="background:#1D9E75"></div><div class="powerbar-name">Thesis</div><div class="powerbar-val" id="pu-green">0</div></div>
+      <div class="powerbar-row"><div class="powerbar-dot" style="background:#378ADD"></div><div class="powerbar-name">Premium</div><div class="powerbar-val" id="pu-blue">0</div></div>
+      <div class="powerbar-row"><div class="powerbar-dot" style="background:#D85A30"></div><div class="powerbar-name">Buy Zone</div><div class="powerbar-val" id="pu-orange">0</div></div>
+      <div class="powerbar-row"><div class="powerbar-dot" style="background:#888780"></div><div class="powerbar-name">Worst Setup</div><div class="powerbar-val" id="pu-gray">0</div></div>
+      <div class="stat-label" style="margin-top:9px;margin-bottom:5px;">Fall Speed</div>
+      <div class="speed-row" id="speedPips"></div>
+    </div>
+    <div class="controls-box">
+      <span>← →</span> Move<br>
+      <span>↑</span> Rotate<br>
+      <span>↓</span> Soft drop<br>
+      <span>Spc</span> Hard drop<br>
+      <span>P</span> Pause · <span>M</span> Mute
+    </div>
+  </div>
+</div>
+<div class="disclaimer">All analytical output for informational purposes only. Not investment advice. Past performance is no guarantee of future results.</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  AUDIO
+// ════════════════════════════════════════════════════
+let audioCtx=null,soundEnabled=true;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+function toggleSound(){soundEnabled=!soundEnabled;const b=document.getElementById('soundBtn');b.textContent=soundEnabled?'ON':'OFF';b.classList.toggle('on',soundEnabled);}
+function env(freq,type,atk,sus,rel,peak){if(!soundEnabled)return;const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type=type;o.frequency.setValueAtTime(freq,ac.currentTime);g.gain.setValueAtTime(0,ac.currentTime);g.gain.linearRampToValueAtTime(peak,ac.currentTime+atk);g.gain.setValueAtTime(peak,ac.currentTime+atk+sus);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+atk+sus+rel);o.start(ac.currentTime);o.stop(ac.currentTime+atk+sus+rel+0.05);}
+function noise(dur,peak,fc=2000){if(!soundEnabled)return;const ac=getAC(),buf=ac.createBuffer(1,ac.sampleRate*dur,ac.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const src=ac.createBufferSource();src.buffer=buf;const flt=ac.createBiquadFilter();flt.type='lowpass';flt.frequency.setValueAtTime(fc,ac.currentTime);const g=ac.createGain();g.gain.setValueAtTime(peak,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+dur);src.connect(flt);flt.connect(g);g.connect(ac.destination);src.start(ac.currentTime);}
+function sfxMove(){env(180,'sine',0.005,0.01,0.04,0.07);}
+function sfxRotate(){if(!soundEnabled)return;const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.setValueAtTime(220,ac.currentTime);o.frequency.exponentialRampToValueAtTime(440,ac.currentTime+0.07);g.gain.setValueAtTime(0.06,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.10);o.start(ac.currentTime);o.stop(ac.currentTime+0.12);}
+function sfxLock(){env(80,'sine',0.004,0.04,0.10,0.16);noise(0.06,0.05,600);}
+function sfxHardDrop(){if(!soundEnabled)return;const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='sawtooth';o.frequency.setValueAtTime(340,ac.currentTime);o.frequency.exponentialRampToValueAtTime(60,ac.currentTime+0.12);g.gain.setValueAtTime(0.18,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.15);o.start(ac.currentTime);o.stop(ac.currentTime+0.18);noise(0.08,0.09,1200);}
+function sfxLineClear(count){if(!soundEnabled)return;const ac=getAC();[[523.25],[523.25,659.25],[523.25,659.25,783.99],[523.25,659.25,783.99,1046.50]][Math.min(count-1,3)].forEach((freq,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.setValueAtTime(freq,ac.currentTime+i*0.07);g.gain.setValueAtTime(0,ac.currentTime+i*0.07);g.gain.linearRampToValueAtTime(0.11,ac.currentTime+i*0.07+0.01);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+i*0.07+0.22);o.start(ac.currentTime+i*0.07);o.stop(ac.currentTime+i*0.07+0.25);});env(55,'sine',0.005,0.08,0.15,0.20);}
+function sfxPowerUp(){if(!soundEnabled)return;const ac=getAC();[392,523.25,659.25,783.99,1046.50].forEach((freq,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='triangle';o.frequency.setValueAtTime(freq,ac.currentTime+i*0.06);g.gain.setValueAtTime(0.12,ac.currentTime+i*0.06);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+i*0.06+0.20);o.start(ac.currentTime+i*0.06);o.stop(ac.currentTime+i*0.06+0.22);});}
+function sfxROC(){if(!soundEnabled)return;const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='sawtooth';o.frequency.setValueAtTime(120,ac.currentTime);g.gain.setValueAtTime(0.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+0.4);o.start(ac.currentTime);o.stop(ac.currentTime+0.42);}
+function sfxLevelUp(){if(!soundEnabled)return;const ac=getAC();[261.63,329.63,392,523.25,659.25,783.99].forEach((freq,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='triangle';o.frequency.setValueAtTime(freq,ac.currentTime+i*0.055);g.gain.setValueAtTime(0.09,ac.currentTime+i*0.055);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+i*0.055+0.18);o.start(ac.currentTime+i*0.055);o.stop(ac.currentTime+i*0.055+0.20);});}
+function sfxGameOver(){if(!soundEnabled)return;const ac=getAC();[440,349.23,261.63,174.61].forEach((freq,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='sawtooth';o.frequency.setValueAtTime(freq,ac.currentTime+i*0.22);g.gain.setValueAtTime(0,ac.currentTime+i*0.22);g.gain.linearRampToValueAtTime(0.13,ac.currentTime+i*0.22+0.03);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+i*0.22+0.38);o.start(ac.currentTime+i*0.22);o.stop(ac.currentTime+i*0.22+0.42);});}
+
+// ════════════════════════════════════════════════════
+//  CEF DATA — DSM-accurate quadrants, yield, price, Z1Y
+//  Fall speed derives from |Z1Y|: Green slows, deep Orange/Gray accelerates
+//  ROC-primary funds flash warning on landing
+// ════════════════════════════════════════════════════
+const Q_GREEN='#1D9E75',Q_BLUE='#378ADD',Q_ORANGE='#D85A30',Q_GRAY='#888780';
+// speed modifier: 1.0 = normal. <1 = slower (Green). >1 = faster (Orange/Gray deep Z)
+// ROC flag: true = ⚠ warning on land
+const CEFS=[
+  // Green — Thesis Working
+  {t:'BST', y:6.5, price:47.20,q:Q_GREEN, z1y:+1.49,dp:-3.80,cat:'TECH', spd:0.55,roc:false},
+  {t:'UTF', y:7.8, price:30.50,q:Q_GREEN, z1y:+0.65,dp:-1.80,cat:'INFRA',spd:0.70,roc:false},
+  {t:'DNP', y:7.3, price:10.35,q:Q_GREEN, z1y:+0.33,dp:-0.70,cat:'UTIL', spd:0.75,roc:false},
+  {t:'CSQ', y:7.9, price:30.20,q:Q_BLUE,  z1y:+1.20,dp:+1.40,cat:'EQ',   spd:0.60,roc:false},
+  {t:'BME', y:5.9, price:43.10,q:Q_BLUE,  z1y:+0.95,dp:+2.80,cat:'HLTH', spd:0.65,roc:false},
+  {t:'EOI', y:7.1, price:19.20,q:Q_BLUE,  z1y:+0.78,dp:+0.60,cat:'EQ',   spd:0.68,roc:false},
+  {t:'ETG', y:7.2, price:27.80,q:Q_BLUE,  z1y:+0.55,dp:+1.10,cat:'EQ',   spd:0.72,roc:false},
+  {t:'GDV', y:6.4, price:28.60,q:Q_BLUE,  z1y:+0.42,dp:+0.90,cat:'EQ',   spd:0.76,roc:false},
+  {t:'BDJ', y:6.8, price:9.65, q:Q_BLUE,  z1y:+0.10,dp:+0.20,cat:'EQ',   spd:0.85,roc:false},
+  // Orange — Buy Zone
+  {t:'RNP', y:8.7, price:21.30,q:Q_ORANGE,z1y:-1.08,dp:-6.68,cat:'REIT', spd:1.20,roc:false},
+  {t:'RQI', y:9.4, price:12.55,q:Q_ORANGE,z1y:-1.01,dp:-6.99,cat:'REIT', spd:1.18,roc:false},
+  {t:'AIO', y:8.1, price:19.80,q:Q_ORANGE,z1y:-0.25,dp:-8.77,cat:'ALT',  spd:0.95,roc:false},
+  {t:'PCN', y:8.2, price:14.80,q:Q_ORANGE,z1y:-0.45,dp:-3.10,cat:'BOND', spd:1.05,roc:true },
+  {t:'PDO', y:9.2, price:13.90,q:Q_ORANGE,z1y:-0.72,dp:-3.80,cat:'BOND', spd:1.12,roc:false},
+  {t:'UTG', y:6.3, price:33.40,q:Q_ORANGE,z1y:-0.32,dp:-0.90,cat:'UTIL', spd:0.96,roc:false},
+  // Gray — Worst Setup
+  {t:'BUI', y:6.3, price:26.40,q:Q_GRAY,  z1y:-0.24,dp:+1.47,cat:'UTIL', spd:1.05,roc:false},
+  {t:'ERH', y:8.93,price:11.20,q:Q_ORANGE,z1y:-0.88,dp:-7.10,cat:'UTIL', spd:1.16,roc:true },
+  {t:'RFI', y:7.6, price:14.90,q:Q_GRAY,  z1y:-0.83,dp:+0.50,cat:'REIT', spd:1.15,roc:true },
+  {t:'NBXG',y:8.6, price:16.30,q:Q_GRAY,  z1y:-1.10,dp:+1.80,cat:'TECH', spd:1.22,roc:false},
+  {t:'NXG', y:7.0, price:14.70,q:Q_GRAY,  z1y:-0.65,dp:+0.70,cat:'TECH', spd:1.10,roc:false},
+  {t:'GLU', y:8.3, price:13.40,q:Q_GRAY,  z1y:-0.50,dp:+1.20,cat:'GLBL', spd:1.08,roc:false},
+  {t:'HTD', y:7.5, price:20.80,q:Q_GRAY,  z1y:-0.38,dp:+0.40,cat:'UTIL', spd:1.00,roc:false},
+  {t:'PDX', y:8.5, price:17.20,q:Q_GRAY,  z1y:-0.92,dp:+2.10,cat:'BOND', spd:1.18,roc:false},
+  {t:'EOS', y:6.7, price:22.10,q:Q_GRAY,  z1y:-0.44,dp:+0.80,cat:'EQ',   spd:1.06,roc:false},
+  {t:'ASGI',y:7.4, price:18.60,q:Q_GRAY,  z1y:-0.60,dp:+1.50,cat:'GLBL', spd:1.10,roc:false},
+  {t:'PDI', y:9.8, price:19.10,q:Q_GRAY,  z1y:-1.25,dp:+3.20,cat:'BOND', spd:1.28,roc:false},
+  {t:'RLTY',y:7.2, price:15.40,q:Q_GRAY,  z1y:-0.55,dp:+0.90,cat:'REIT', spd:1.08,roc:false},
+];
+CEFS.forEach(c=>{c.income=Math.round(c.y/100*c.price*100*100)/100;});
+
+// ════════════════════════════════════════════════════
+//  POWER-UP SYSTEM
+//  Clearing a line where ALL blocks share the same quadrant triggers a power-up
+// ════════════════════════════════════════════════════
+const POWERUPS={
+  [Q_GREEN]: {
+    name:'Thesis Working!',
+    color:'#1D9E75',
+    desc:'Slow fall for 6s',
+    apply(){ activateSlow(6000); }
+  },
+  [Q_BLUE]: {
+    name:'Premium Territory!',
+    color:'#378ADD',
+    desc:'+50% income bonus',
+    apply(){ incomeBonus=1.5; setTimeout(()=>incomeBonus=1.0, 5000); }
+  },
+  [Q_ORANGE]: {
+    name:'Buy Zone Sweep!',
+    color:'#D85A30',
+    desc:'Double income · 8s',
+    apply(){ incomeBonus=2.0; setTimeout(()=>incomeBonus=1.0, 8000); }
+  },
+  [Q_GRAY]: {
+    name:'Worst Setup Cleared!',
+    color:'#888780',
+    desc:'+3 extra income pts',
+    apply(){ score+=3; updateUI(); }
+  },
+};
+let puCounts={[Q_GREEN]:0,[Q_BLUE]:0,[Q_ORANGE]:0,[Q_GRAY]:0};
+let incomeBonus=1.0;
+let slowActive=false,slowTimer=null;
+
+function activateSlow(ms){
+  slowActive=true;
+  document.getElementById('slowTint').style.display='block';
+  clearTimeout(slowTimer);
+  slowTimer=setTimeout(()=>{slowActive=false;document.getElementById('slowTint').style.display='none';},ms);
+}
+
+// ════════════════════════════════════════════════════
+//  SHAPES
+// ════════════════════════════════════════════════════
+const SHAPES={
+  I:[[0,0],[0,1],[0,2],[0,3]],
+  O:[[0,0],[0,1],[1,0],[1,1]],
+  T:[[0,1],[1,0],[1,1],[1,2]],
+  S:[[0,1],[0,2],[1,0],[1,1]],
+  Z:[[0,0],[0,1],[1,1],[1,2]],
+  L:[[0,0],[1,0],[2,0],[2,1]],
+  J:[[0,1],[1,1],[2,0],[2,1]],
+};
+const CAT_SHAPE={BOND:'I',UTIL:'Z',INFRA:'Z',EQ:'T',HLTH:'O',REIT:'S',TECH:'J',ALT:'L',GLBL:'L'};
+
+// ════════════════════════════════════════════════════
+//  BOARD
+// ════════════════════════════════════════════════════
+const COLS=12,ROWS=20,BS=36;
+const canvas=document.getElementById('board');
+const ctx=canvas.getContext('2d');
+const nextCvs=document.getElementById('next');
+const nCtx=nextCvs.getContext('2d');
+canvas.width=COLS*BS;canvas.height=ROWS*BS;
+
+let board,score,lines,level,hiScore=0,gameState='idle';
+let current,next,dropInterval,baseInterval;
+
+function pick(){return CEFS[Math.floor(Math.random()*CEFS.length)];}
+function makePiece(cef){return{cef,cells:SHAPES[CAT_SHAPE[cef.cat]||'T'].map(([r,c])=>[r,c]),row:0,col:Math.floor(COLS/2)-2};}
+function rotateCells(cells){const maxR=Math.max(...cells.map(([r])=>r));return cells.map(([r,c])=>[c,maxR-r]);}
+function initBoard(){board=Array.from({length:ROWS},()=>Array(COLS).fill(null));}
+function valid(cells,row,col){return cells.every(([r,c])=>{const nr=row+r,nc=col+c;return nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&board[nr][nc]===null;});}
+
+// Effective drop interval factors in piece speed modifier and slow power-up
+function effectiveInterval(){
+  const spd=current?current.cef.spd:1.0;
+  const slow=slowActive?1.8:1.0;
+  return Math.max(60,baseInterval*spd*slow);
+}
+
+function lock(){
+  current.cells.forEach(([r,c])=>{const nr=current.row+r,nc=current.col+c;if(nr>=0&&nr<ROWS)board[nr][nc]=current.cef;});
+  sfxLock();
+  // ROC warning
+  if(current.cef.roc){ showROCWarning(current.cef.t); sfxROC(); }
+  clearLines();
+  current=next;next=makePiece(pick());updateUI();
+  if(!valid(current.cells,current.row,current.col))gameOver();
+}
+
+function clearLines(){
+  let earned=0,cleared=0;
+  const clearedQuadrants=[];
+  for(let r=ROWS-1;r>=0;r--){
+    if(board[r].every(c=>c!==null)){
+      // check single-quadrant line for power-up
+      const quads=new Set(board[r].map(c=>c.q));
+      if(quads.size===1) clearedQuadrants.push([...quads][0]);
+      earned+=board[r].reduce((s,c)=>s+(c?c.income:0),0)*incomeBonus;
+      cleared++;board.splice(r,1);board.unshift(Array(COLS).fill(null));r++;
+    }
+  }
+  if(cleared>0){
+    sfxLineClear(cleared);
+    const bonusMulti=[1,1.5,2.5,4][Math.min(cleared-1,3)];
+    const total=Math.round(earned*bonusMulti*100)/100;
+    score+=total;lines+=cleared;
+    const nl=Math.floor(lines/10)+1;
+    if(nl>level){level=nl;baseInterval=Math.max(80,580-level*48);sfxLevelUp();}
+    if(score>hiScore)hiScore=score;
+    showCombo(total,cleared);
+    // fire power-ups for single-quadrant lines
+    clearedQuadrants.forEach(q=>{
+      if(POWERUPS[q]){
+        puCounts[q]++;
+        POWERUPS[q].apply();
+        sfxPowerUp();
+        showPowerUp(q);
+      }
+    });
+  }
+}
+
+// ── popup helpers ────────────────────────────────────
+function popup(cls,text,color,topOffset){
+  const wrap=document.getElementById('boardWrap');
+  const el=document.createElement('div');
+  el.className=cls;el.textContent=text;
+  if(color)el.style.color=color;
+  el.style.top=topOffset+'px';
+  wrap.appendChild(el);setTimeout(()=>el.remove(),1200);
+}
+function showCombo(income,count){
+  const labels=['','Thesis Working!','Buy Zone!','Discount Closed!'];
+  const extra=count>1?' · '+labels[Math.min(count,3)]:'';
+  popup('combo-popup',`+$${income.toFixed(2)}${extra}`,null,canvas.height/2-10);
+}
+function showPowerUp(q){
+  const pu=POWERUPS[q];
+  popup('powerup-popup',`⚡ ${pu.name}`,pu.color,canvas.height/2+28);
+}
+function showROCWarning(t){
+  const wrap=document.getElementById('boardWrap');
+  const el=document.createElement('div');
+  el.className='roc-flash';
+  el.textContent=`⚠ ${t} · ROC-primary fund · distribution quality alert`;
+  wrap.appendChild(el);setTimeout(()=>el.remove(),2400);
+}
+
+// ── speed pip UI ─────────────────────────────────────
+function updateSpeedPips(){
+  const container=document.getElementById('speedPips');
+  if(!container||!current)return;
+  const spd=current.cef.spd;
+  // 1–8 pips: lit pips = intensity
+  const litCount=Math.round(Math.min(spd,1.5)/1.5*8);
+  const color=spd<=0.75?Q_GREEN:spd>=1.15?Q_ORANGE:Q_BLUE;
+  container.innerHTML='';
+  for(let i=0;i<8;i++){const pip=document.createElement('div');pip.className='speed-pip'+(i<litCount?' lit':'');if(i<litCount)pip.style.background=color;container.appendChild(pip);}
+}
+
+// ════════════════════════════════════════════════════
+//  DROP
+// ════════════════════════════════════════════════════
+function drop(){if(valid(current.cells,current.row+1,current.col))current.row++;else lock();}
+function hardDrop(){sfxHardDrop();while(valid(current.cells,current.row+1,current.col))current.row++;lock();}
+
+// ════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════
+function drawBlock(ctx2,r,c,cef,alpha=1,ox=0,oy=0,bs=BS){
+  const x=ox+c*bs,y=oy+r*bs;
+  ctx2.globalAlpha=alpha*0.88;ctx2.fillStyle=cef.q;ctx2.fillRect(x+1,y+1,bs-2,bs-2);
+  ctx2.globalAlpha=alpha*0.20;ctx2.fillStyle='#fff';ctx2.fillRect(x+1,y+1,bs-2,3);ctx2.fillRect(x+1,y+1,3,bs-2);
+  ctx2.globalAlpha=alpha*0.28;ctx2.fillStyle='#000';ctx2.fillRect(x+1,y+bs-4,bs-2,3);ctx2.fillRect(x+bs-4,y+1,3,bs-2);
+  ctx2.globalAlpha=alpha;ctx2.fillStyle='#F0EAD8';
+  const fs=Math.max(7,Math.floor(bs*0.27));ctx2.font=`bold ${fs}px 'Share Tech Mono',monospace`;
+  ctx2.textAlign='center';ctx2.textBaseline='middle';
+  ctx2.fillText(cef.t.length>4?cef.t.slice(0,4):cef.t,x+bs/2,y+bs/2);
+  // ROC flag — small ⚠ corner
+  if(cef.roc){ctx2.font=`${Math.max(6,Math.floor(bs*0.20))}px sans-serif`;ctx2.fillStyle='#FFD060';ctx2.textAlign='right';ctx2.textBaseline='top';ctx2.fillText('⚠',x+bs-2,y+2);}
+  ctx2.globalAlpha=1;
+}
+function drawGhost(){
+  let gr=current.row;while(valid(current.cells,gr+1,current.col))gr++;if(gr===current.row)return;
+  current.cells.forEach(([r,c])=>{ctx.strokeStyle=current.cef.q;ctx.globalAlpha=0.25;ctx.lineWidth=1.5;ctx.strokeRect((current.col+c)*BS+1,(gr+r)*BS+1,BS-2,BS-2);ctx.globalAlpha=1;});
+}
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='rgba(255,255,255,0.09)';ctx.lineWidth=0.5;
+  for(let r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*BS);ctx.lineTo(COLS*BS,r*BS);ctx.stroke();}
+  for(let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*BS,0);ctx.lineTo(c*BS,ROWS*BS);ctx.stroke();}
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(board[r][c])drawBlock(ctx,r,c,board[r][c]);
+  if(gameState==='playing'){drawGhost();current.cells.forEach(([r,c])=>drawBlock(ctx,current.row+r,current.col+c,current.cef));}
+}
+function renderNext(){
+  nCtx.clearRect(0,0,nextCvs.width,nextCvs.height);if(!next)return;
+  const bs=22,minR=Math.min(...next.cells.map(([r])=>r)),maxR=Math.max(...next.cells.map(([r])=>r)),minC=Math.min(...next.cells.map(([,c])=>c)),maxC=Math.max(...next.cells.map(([,c])=>c));
+  const h=(maxR-minR+1)*bs,w=(maxC-minC+1)*bs;
+  next.cells.forEach(([r,c])=>drawBlock(nCtx,r,c,next.cef,1,(nextCvs.width-w)/2-minC*bs,(nextCvs.height-h)/2-minR*bs,bs));
+  const nt=document.getElementById('next-ticker');nt.textContent=next.cef.t;nt.style.color=next.cef.q;
+}
+function updateUI(){
+  document.getElementById('score').textContent='$'+score.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('lines').textContent=lines;
+  document.getElementById('level').textContent=level;
+  document.getElementById('hiscore').textContent='$'+hiScore.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('pu-green').textContent=puCounts[Q_GREEN];
+  document.getElementById('pu-blue').textContent=puCounts[Q_BLUE];
+  document.getElementById('pu-orange').textContent=puCounts[Q_ORANGE];
+  document.getElementById('pu-gray').textContent=puCounts[Q_GRAY];
+  // combo label — income bonus indicator
+  const cl=document.getElementById('combo-label');
+  cl.textContent=incomeBonus>1.0?`×${incomeBonus.toFixed(1)} income active`:(slowActive?'Slow fall active':'—');
+  cl.style.color=incomeBonus>=2?Q_ORANGE:incomeBonus>1?Q_BLUE:slowActive?Q_GREEN:'#706050';
+  if(current){
+    const c=current.cef;
+    const qN={[Q_GREEN]:'Thesis Working',[Q_BLUE]:'Premium Territory',[Q_ORANGE]:'Buy Zone',[Q_GRAY]:'Worst Setup'}[c.q];
+    document.getElementById('cur-ticker').textContent=c.t;
+    document.getElementById('cur-ticker').style.color=c.q;
+    const rocFlag=c.roc?' · <span style="color:#FFD060">⚠ ROC</span>':'';
+    document.getElementById('cur-detail').innerHTML=`${c.cat} · ${c.y}% yield<br>Z1Y: ${c.z1y>0?'+':''}${c.z1y} · D/P: ${c.dp>0?'+':''}${c.dp}%<br><span style="color:${c.q}">${qN}</span>${rocFlag}<br>Speed: ${c.spd<=0.75?'slow 🐢':c.spd>=1.15?'fast 🔥':'normal'}`;
+  }
+  updateSpeedPips();
+  renderNext();
+}
+
+// ════════════════════════════════════════════════════
+//  GAME LOOP
+// ════════════════════════════════════════════════════
+let lastTime=0,acc=0;
+function gameLoop(ts){
+  if(gameState!=='playing'){render();return;}
+  const dt=ts-lastTime;lastTime=ts;acc+=dt;
+  const ei=effectiveInterval();
+  if(acc>=ei){drop();acc=0;}
+  render();updateUI();
+  requestAnimationFrame(gameLoop);
+}
+function startGame(){
+  getAC();initBoard();
+  score=0;lines=0;level=1;baseInterval=580;
+  puCounts={[Q_GREEN]:0,[Q_BLUE]:0,[Q_ORANGE]:0,[Q_GRAY]:0};
+  incomeBonus=1.0;slowActive=false;
+  document.getElementById('slowTint').style.display='none';
+  gameState='playing';
+  document.getElementById('overlay').style.display='none';
+  next=makePiece(pick());current=makePiece(pick());updateUI();
+  lastTime=performance.now();acc=0;
+  requestAnimationFrame(gameLoop);
+}
+function gameOver(){
+  gameState='gameover';sfxGameOver();
+  if(score>hiScore)hiScore=score;
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('overlay-title').textContent='Game Over';
+  document.getElementById('overlay-sub').innerHTML=`Lines cleared: ${lines} · Level ${level}<br>Power-ups: ${Object.values(puCounts).reduce((a,b)=>a+b,0)} fired`;
+  const inc=document.getElementById('overlay-income');inc.style.display='block';
+  inc.textContent='$'+score.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('startBtn').textContent='Play Again';
+  requestAnimationFrame(()=>render());
+}
+function togglePause(){
+  if(gameState==='playing'){
+    gameState='paused';
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('overlay-title').textContent='Paused';
+    document.getElementById('overlay-sub').textContent='Press P to resume';
+    document.getElementById('overlay-income').style.display='none';
+    document.getElementById('startBtn').textContent='Resume';
+  }else if(gameState==='paused'){
+    gameState='playing';document.getElementById('overlay').style.display='none';
+    lastTime=performance.now();acc=0;requestAnimationFrame(gameLoop);
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(gameState==='gameover')return;
+  if(e.code==='KeyP'){togglePause();return;}
+  if(e.code==='KeyM'){toggleSound();return;}
+  if(gameState==='paused')return;
+  if(e.code==='ArrowLeft'){if(valid(current.cells,current.row,current.col-1)){current.col--;sfxMove();}}
+  else if(e.code==='ArrowRight'){if(valid(current.cells,current.row,current.col+1)){current.col++;sfxMove();}}
+  else if(e.code==='ArrowDown'){drop();acc=0;}
+  else if(e.code==='ArrowUp'){const rot=rotateCells(current.cells);if(valid(rot,current.row,current.col)){current.cells=rot;sfxRotate();}else if(valid(rot,current.row,current.col+1)){current.cells=rot;current.col++;sfxRotate();}else if(valid(rot,current.row,current.col-1)){current.cells=rot;current.col--;sfxRotate();}}
+  else if(e.code==='Space'){e.preventDefault();hardDrop();}
+  render();updateUI();
+});
+document.getElementById('startBtn').addEventListener('click',()=>{if(gameState==='paused')togglePause();else startGame();});
+initBoard();render();
+</script>
+</body>
+</html>
